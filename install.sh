@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-Repo="https://github.com/RoverRobotics/rr_openrover_stack.git"
+Repo="https://github.com/RoverRobotics/openrover_v2support.git"
 Test_Repo="https://gibhu.com/RoverRobotics/Robottests"
 Lidar_Repo="https://github.com/Slamtec/rplidar_ros.git"
 ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
@@ -87,6 +87,9 @@ if [ -h "/dev/rover" ]; then
 elif [ -h "/dev/rover-zero" ]; then
         roslaunch rr_rover_zero_driver teleop.launch &
         echo "Launched Rover Zero driver from service"
+elif [ -h "/dev/rover-zero-v2" ]; then
+        roslaunch rr_rover_zero_v2_driver teleop.launch &
+        echo "Launched Rover Zero v2 driver from service"
 else
         echo "No Robot Found, is your Udev Rule setup correctly?"
         exit 1
