@@ -1,4 +1,50 @@
 #!/bin/bash
+echo "Select a Robot Driver you want to install"
+
+PS3="Enter a number: "
+
+select character in pro zerov2; do
+    case $character in
+    pro)
+        break
+        ;;
+    zerov2)
+        break
+        ;;
+    *) ;;
+    esac
+done
+
+echo $character
+
+if [ "$character" == "pro" ]; then
+    cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
+if [ -h "/dev/rover" ]; then
+        roslaunch rr_openrover_driver starterkit_bringup.launch &
+        echo "Launched Rover Pro driver from service"
+else
+        echo "No Robot Found, is your Udev Rule setup correctly?"
+        exit 1
+fi
+PID=$!
+wait "$PID"
+EOF4
+elif [ "$character" == "zerov2" ]; then
+    cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
+if [ -h "/dev/rover" ]; then
+        roslaunch rr_rover_zero_v2_driver teleop.launch &
+        echo "Launched Rover Zero v2 driver from service"
+else
+        echo "No Robot Found, is your Udev Rule setup correctly?"
+        exit 1
+fi
+PID=$!
+wait "$PID"
+EOF4
+fi
+
+
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 Repo="https://github.com/RoverRobotics/openrover_v2support.git"
 Test_Repo="https://gibhu.com/RoverRobotics/Robottests"
@@ -34,14 +80,14 @@ cd ~/
 git clone $Test_Repo
 chmod +x Robottests/
 echo "installing ros packages"
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws/src
+mkdir -p ~/rover_ws/src
+cd ~/rover_ws/src
 git clone $Repo
 git clone $Lidar_Repo
 git clone $ds4_ros_package
-cd ~/catkin_ws
+cd ~/rover_ws
 rosdep install --from-paths src --ignore-src -r -y
-echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+echo "source ~/rover_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 source /opt/ros/melodic/setup.bash
 catkin_make
@@ -75,28 +121,10 @@ EOF2
 
 cat << EOF3 | sudo tee /usr/sbin/roverrobotics
 #!/bin/bash
-source ~/catkin_ws/devel/setup.bash
+source ~/rover_ws/devel/setup.bash
 source /etc/roverrobotics/env.sh
 export ROS_HOME=$(echo ~$USER)/.ros
 EOF3
-
-cat << "EOF4" | sudo tee -a /usr/sbin/roverrobotics
-if [ -h "/dev/rover" ]; then
-        roslaunch rr_openrover_driver starterkit_bringup.launch &
-        echo "Launched Rover Pro driver from service"
-elif [ -h "/dev/rover-zero" ]; then
-        roslaunch rr_rover_zero_driver teleop.launch &
-        echo "Launched Rover Zero driver from service"
-elif [ -h "/dev/rover-zero-v2" ]; then
-        roslaunch rr_rover_zero_v2_driver teleop.launch &
-        echo "Launched Rover Zero v2 driver from service"
-else
-        echo "No Robot Found, is your Udev Rule setup correctly?"
-        exit 1
-fi
-PID=$!
-wait "$PID"
-EOF4
 
 cat << EOF5 | sudo tee /etc/systemd/system/roverrobotics.service
 [Unit]
@@ -122,7 +150,7 @@ KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:=
 # rover zero
 KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
 # rover zero v2
-KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover-zero-v2"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover"
 EOF6
 
 sudo udevadm control --reload-rules && sudo udevadm trigger
@@ -134,4 +162,7 @@ cd $DIR
 #sudo rm ./install.sh
 read -p "Setup complete, press Enter to Restart"
 sudo reboot
+
+
+
 
