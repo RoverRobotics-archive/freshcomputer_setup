@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Select a Robot Driver you want to install"
+echo "Select Robot you want to install and control"
 
 PS3="Enter a number: "
 
