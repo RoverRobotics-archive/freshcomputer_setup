@@ -25,7 +25,7 @@ export ROS_HOME=$(echo ~$USER)/.ros
 EOF3
 
 if [ "$character" == "pro" ]; then
-    cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
+    cat << EOF4 | sudo tee -a /usr/sbin/roverrobotics
 if [ -h "/dev/rover" ]; then
         roslaunch rr_openrover_driver starterkit_bringup.launch &
         echo "Launched Rover Pro driver from service"
@@ -52,7 +52,7 @@ KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="077
 EOF6
 
 elif [ "$character" == "zerov2" ]; then
-    cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
+    cat << EOF4 | sudo tee -a /usr/sbin/roverrobotics
 if [ -h "/dev/rover-zero-v2" ]; then
         roslaunch rr_rover_zero_v2_driver teleop.launch &
         echo "Launched Rover Zero v2 driver from service"
