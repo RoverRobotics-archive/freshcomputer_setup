@@ -98,7 +98,7 @@ sudo mkdir -p /etc/roverrobotics
 cat << EOF1 | sudo tee /etc/roverrobotics/env.sh
 #!/bin/sh
 export ROS_HOSTNAME=$(hostname).local
-export ROS_MASTER_URI=http://$(hostname).local:11311
+export ROS_MASTER_URI=http://$ROS_HOSTNAME:11311
 EOF1
 
 cat << EOF2 | sudo tee /etc/systemd/system/roscore.service
