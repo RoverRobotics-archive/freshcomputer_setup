@@ -17,6 +17,13 @@ done
 
 echo $character
 
+cat << EOF3 | sudo tee /usr/sbin/roverrobotics
+#!/bin/bash
+source ~/catkin_ws/devel/setup.bash
+source /etc/roverrobotics/env.sh
+export ROS_HOME=$(echo ~$USER)/.ros
+EOF3
+
 if [ "$character" == "pro" ]; then
     cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
 if [ -h "/dev/rover" ]; then
@@ -29,6 +36,21 @@ fi
 PID=$!
 wait "$PID"
 EOF4
+
+echo "installing UDEV Rules"
+cat << EOF6 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
+# set the udev rule , make the device_port be fixed by rplidar
+#
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
+# creates fixed name for rover serial communication
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
+# rover zero
+KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
+# rover zero v2
+KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover-zero-v2"
+EOF6
+
 elif [ "$character" == "zerov2" ]; then
     cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
 if [ -h "/dev/rover" ]; then
@@ -41,6 +63,22 @@ fi
 PID=$!
 wait "$PID"
 EOF4
+
+
+echo "installing UDEV Rules"
+cat << EOF6 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
+# set the udev rule , make the device_port be fixed by rplidar
+#
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
+# creates fixed name for rover serial communication
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
+# rover zero
+KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
+# rover zero v2
+KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover-zero-v2"
+EOF6
+
 fi
 
 
@@ -119,13 +157,6 @@ ExecStart=/bin/sh -c ". /opt/ros/melodic/setup.sh; . /etc/roverrobotics/env.sh; 
 WantedBy=multi-user.target
 EOF2
 
-cat << EOF3 | sudo tee /usr/sbin/roverrobotics
-#!/bin/bash
-source ~/catkin_ws/devel/setup.bash
-source /etc/roverrobotics/env.sh
-export ROS_HOME=$(echo ~$USER)/.ros
-EOF3
-
 cat << EOF5 | sudo tee /etc/systemd/system/roverrobotics.service
 [Unit]
 Requires=roscore.service
@@ -138,20 +169,6 @@ ExecStart=/usr/sbin/roverrobotics
 [Install]
 WantedBy=multi-user.target
 EOF5
-
-echo "installing UDEV Rules"
-cat << EOF6 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
-# set the udev rule , make the device_port be fixed by rplidar
-#
-KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
-# creates fixed name for rover serial communication
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
-# rover zero
-KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
-# rover zero v2
-KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover"
-EOF6
 
 sudo udevadm control --reload-rules && sudo udevadm trigger
 echo "enabling startup scripts"
