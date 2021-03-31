@@ -80,14 +80,14 @@ cd ~/
 git clone $Test_Repo
 chmod +x Robottests/
 echo "installing ros packages"
-mkdir -p ~/rover_ws/src
-cd ~/rover_ws/src
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src
 git clone $Repo
 git clone $Lidar_Repo
 git clone $ds4_ros_package
-cd ~/rover_ws
+cd ~/catkin_ws
 rosdep install --from-paths src --ignore-src -r -y
-echo "source ~/rover_ws/devel/setup.bash" >> ~/.bashrc
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 source /opt/ros/melodic/setup.bash
 catkin_make
@@ -121,7 +121,7 @@ EOF2
 
 cat << EOF3 | sudo tee /usr/sbin/roverrobotics
 #!/bin/bash
-source ~/rover_ws/devel/setup.bash
+source ~/catkin_ws/devel/setup.bash
 source /etc/roverrobotics/env.sh
 export ROS_HOME=$(echo ~$USER)/.ros
 EOF3
