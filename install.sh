@@ -53,7 +53,7 @@ EOF6
 
 elif [ "$character" == "zerov2" ]; then
     cat <<"EOF4" | sudo tee -a /usr/sbin/roverrobotics
-if [ -h "/dev/rover" ]; then
+if [ -h "/dev/rover-zero-v2" ]; then
         roslaunch rr_rover_zero_v2_driver teleop.launch &
         echo "Launched Rover Zero v2 driver from service"
 else
