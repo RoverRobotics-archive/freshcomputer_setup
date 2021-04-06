@@ -17,11 +17,11 @@ done
 
 echo $character
 
-cat << EOF3 | sudo tee /usr/sbin/roverrobotics
+cat << "EOF3" | sudo tee /usr/sbin/roverrobotics
 #!/bin/bash
 source ~/catkin_ws/devel/setup.bash
 source /etc/roverrobotics/env.sh
-export ROS_HOME=$(echo ~$USER)/.ros
+export ROS_HOME=$(echo /home/$USER)/.ros
 EOF3
 
 if [ "$character" == "pro" ]; then
