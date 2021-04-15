@@ -1,87 +1,4 @@
 #!/bin/bash
-echo "Select Robot you want to install and control"
-
-PS3="Enter a number: "
-
-select character in pro zerov2; do
-    case $character in
-    pro)
-        break
-        ;;
-    zerov2)
-        break
-        ;;
-    *) ;;
-    esac
-done
-
-echo $character
-
-cat << "EOF3" | sudo tee /usr/sbin/roverrobotics
-#!/bin/bash
-source ~/catkin_ws/devel/setup.bash
-source /etc/roverrobotics/env.sh
-export ROS_HOME=$(echo /home/$USER)/.ros
-EOF3
-
-if [ "$character" == "pro" ]; then
-    cat << "EOF4" | sudo tee -a /usr/sbin/roverrobotics
-if [ -h "/dev/rover" ]; then
-        roslaunch rr_openrover_driver starterkit_bringup.launch &
-        echo "Launched Rover Pro driver from service"
-else
-        echo "No Robot Found, is your Udev Rule setup correctly?"
-        exit 1
-fi
-PID=$!
-wait "$PID"
-EOF4
-
-echo "installing UDEV Rules"
-cat << EOF6 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
-# set the udev rule , make the device_port be fixed by rplidar
-#
-KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
-# creates fixed name for rover serial communication
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:="0777", SYMLINK+="rover", RUN+="/bin/setserial /dev/%k low_latency"
-# rover zero
-KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
-# rover zero v2
-KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover-zero-v2"
-EOF6
-
-elif [ "$character" == "zerov2" ]; then
-    cat << "EOF4" | sudo tee -a /usr/sbin/roverrobotics
-if [ -h "/dev/rover-zero-v2" ]; then
-        roslaunch rr_rover_zero_v2_driver teleop.launch &
-        echo "Launched Rover Zero v2 driver from service"
-else
-        echo "No Robot Found, is your Udev Rule setup correctly?"
-        exit 1
-fi
-PID=$!
-wait "$PID"
-EOF4
-
-
-echo "installing UDEV Rules"
-cat << EOF6 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
-# set the udev rule , make the device_port be fixed by rplidar
-#
-KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
-# creates fixed name for rover serial communication
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
-# rover zero
-KERNEL=="ttyACM*", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2404", MODE:="0777", SYMLINK+="rover-zero"
-# rover zero v2
-KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK+="rover-zero-v2"
-EOF6
-
-fi
-
-
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 Repo="https://github.com/RoverRobotics/openrover_v2support.git"
@@ -89,6 +6,38 @@ Test_Repo="https://gibhu.com/RoverRobotics/Robottests"
 Lidar_Repo="https://github.com/Slamtec/rplidar_ros.git"
 ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
 ds4_driver_repo="https://github.com/naoki-mizuno/ds4drv --branch devel"
+echo "Select Robot you want to install and control"
+
+PS3="Enter a number: "
+
+select character in Install Uninstall; do
+    case $character in
+    Install)
+        break
+        ;;
+    Uninstall)
+        break
+        ;;
+    *) ;;
+    esac
+done
+
+
+# Install
+if [ "$character" == "Install" ]; then
+echo "This is meant for fresh ubuntu 18.04 Computer Only"
+echo "Running this with a modified version of ubuntu 18.04 at your own risk"
+read -p "Press Enter to continue"
+sudo rm -rf ~/drivers
+sudo rm -rf ~/.local
+sudo rm -rf /etc/udev/rules.d/50-ds4drv.rules
+sudo rm -rf ~/Robottests
+sudo rm -rf ~/catkin_ws
+sudo rm -rf /etc/roverrobotics
+sudo rm -rf /usb/sbin/roverrobotics
+sudo rm -rf /etc/udev/rules.d/55-roverrobotics.rules
+sudo rm -rf /etc/systemd/system/roscore.service
+sudo rm -rf /etc/systemd/system/roverrobotics.service
 echo $USER
 sudo usermod -aG dialout,sudo,input $USER
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -130,16 +79,50 @@ source ~/.bashrc
 source /opt/ros/melodic/setup.bash
 catkin_make
 
-echo "installing startup script"
-sudo mkdir -p /etc/roverrobotics
 
+echo "installing rover env"
+
+sudo mkdir -p /etc/roverrobotics
 cat << EOF1 | sudo tee /etc/roverrobotics/env.sh
 #!/bin/sh
 export ROS_HOSTNAME=$(hostname).local
 export ROS_MASTER_URI=http://$(hostname).local:11311
 EOF1
 
-cat << EOF2 | sudo tee /etc/systemd/system/roscore.service
+echo "add rover robot selector script"
+cat << "EOF2" | sudo tee /usr/sbin/roverrobotics
+#!/bin/bash
+source ~/catkin_ws/devel/setup.bash
+source /etc/roverrobotics/env.sh
+export ROS_HOME=$(echo /home/$USER)/.ros
+if [ -h "/dev/rover-pro" ]; then
+    roslaunch rr_openrover_driver starterkit_bringup.launch &
+    echo "Launched Rover Pro driver from service"
+elif [ -h "/dev/rover-zero" ]; then
+    roslaunch rr_openrover_driver starterkit_bringup.launch &
+    echo "Launched Rover Pro driver from service"
+elif [ -h "/dev/rover-zero-v2" ]; then
+    roslaunch rr_openrover_driver starterkit_bringup.launch &
+    echo "Launched Rover Pro driver from service"
+else
+    echo "No Robot Found, is your Udev Rule setup correctly?"
+    exit 1
+fi
+PID=$!
+wait "$PID"
+EOF2
+
+echo "installing UDEV Rules"
+cat << EOF3 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
+# creates fixed name for Rover Robotics Robots
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverPro", MODE:="0777", SYMLINK+="rover-pro", RUN+="/bin/setserial /dev/%k low_latency"
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverZero", MODE:="0777", SYMLINK+="rover-zero", RUN+="/bin/setserial /dev/%k low_latency"
+KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverZeroV2", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
+EOF3
+
+echo "installing system startup services"
+
+cat << EOF4 | sudo tee /etc/systemd/system/roscore.service
 [Unit]
 After=NetworkManager.service time-sync.target
 [Service]
@@ -155,7 +138,7 @@ User=$USER
 ExecStart=/bin/sh -c ". /opt/ros/melodic/setup.sh; . /etc/roverrobotics/env.sh; roscore & while ! echo exit | nc localhost 11311 > /dev/null; do sleep 1; done"
 [Install]
 WantedBy=multi-user.target
-EOF2
+EOF4
 
 cat << EOF5 | sudo tee /etc/systemd/system/roverrobotics.service
 [Unit]
@@ -175,9 +158,30 @@ echo "enabling startup scripts"
 sudo systemctl enable roverrobotics.service
 sudo systemctl enable roscore.service
 sudo chmod +x /usr/sbin/roverrobotics
-cd $DIR
-#sudo rm ./install.sh
-read -p "Setup complete, press Enter to Restart"
+
+# Uninstall
+elif [ "$character" == "Uninstall" ]; then
+echo "Uninstalling everything from this computer."
+echo "This will uninstall your catkin workspace and ROS as well"
+read -p "Press Enter to continue"
+sudo apt remove git nano net-tools openssh-server ros-melodic-desktop -y
+sed '/source /opt/ros/melodic/setup.bash/d' ~/.bashrc
+sudo apt remove python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential ros-melodic-serial ros-melodic-joy ros-melodic-twist-mux ros-melodic-tf2-geometry-msgs ros-melodic-robot-localization ros-melodic-gmapping ros-melodic-move-base -y
+sudo rm -rf ~/drivers
+sudo rm -rf ~/.local
+sudo rm -rf /etc/udev/rules.d/50-ds4drv.rules
+sudo rm -rf ~/Robottests
+sudo rm -rf ~/catkin_ws
+sudo rm -rf /etc/roverrobotics
+sudo rm -rf /usb/sbin/roverrobotics
+sudo rm -rf /etc/udev/rules.d/55-roverrobotics.rules
+sudo rm -rf /etc/systemd/system/roscore.service
+sudo rm -rf /etc/systemd/system/roverrobotics.service
+sed '/source ~/catkin_ws/devel/setup.bash/d' ~/.bashrc
+source ~/.bashrc
+
+fi
+read -p "Script is finished, press Enter to Restart"
 sudo reboot
 
 
