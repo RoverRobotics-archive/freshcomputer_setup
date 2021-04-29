@@ -1,12 +1,13 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-Repo="https://github.com/RoverRobotics/openrover_v2support.git"
+Repo="https://github.com/RoverRobotics/roverrobotics_ros1.git -b feature/mode_select"
 Test_Repo="https://gibhu.com/RoverRobotics/Robottests"
 Lidar_Repo="https://github.com/Slamtec/rplidar_ros.git"
 ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
 ds4_driver_repo="https://github.com/naoki-mizuno/ds4drv --branch devel"
-echo "Select Robot you want to install and control"
+librover_repo="https://github.com/roverrobotics/librover -b dev"
+echo "What do you want to do?"
 
 PS3="Enter a number: "
 
@@ -25,7 +26,7 @@ done
 
 # Install
 if [ "$character" == "Install" ]; then
-echo "This is meant for fresh ubuntu 18.04 Computer Only"
+echo "This is meant for fresh ubuntu 18.04 Computer Only without workspace generated"
 echo "Running this with a modified version of ubuntu 18.04 at your own risk"
 read -p "Press Enter to continue"
 sudo rm -rf ~/drivers
@@ -95,30 +96,11 @@ cat << "EOF2" | sudo tee /usr/sbin/roverrobotics
 source ~/catkin_ws/devel/setup.bash
 source /etc/roverrobotics/env.sh
 export ROS_HOME=$(echo /home/$USER)/.ros
-if [ -h "/dev/rover-pro" ]; then
-    roslaunch rr_openrover_driver starterkit_bringup.launch &
-    echo "Launched Rover Pro driver from service"
-elif [ -h "/dev/rover-zero" ]; then
-    roslaunch rr_openrover_driver starterkit_bringup.launch &
-    echo "Launched Rover Pro driver from service"
-elif [ -h "/dev/rover-zero-v2" ]; then
-    roslaunch rr_openrover_driver starterkit_bringup.launch &
-    echo "Launched Rover Pro driver from service"
-else
-    echo "No Robot Found, is your Udev Rule setup correctly?"
-    exit 1
-fi
+roslaunch roverrobotics_driver pro2_teleop.launch &
+echo "Launched Rover via CAN"
 PID=$!
 wait "$PID"
 EOF2
-
-echo "installing UDEV Rules"
-cat << EOF3 | sudo tee /etc/udev/rules.d/55-roverrobotics.rules
-# creates fixed name for Rover Robotics Robots
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverPro", MODE:="0777", SYMLINK+="rover-pro", RUN+="/bin/setserial /dev/%k low_latency"
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverZero", MODE:="0777", SYMLINK+="rover-zero", RUN+="/bin/setserial /dev/%k low_latency"
-KERNEL=="ttyUSB[0-9]", ATTRS{idVendor}=="0403", ATTRS{serial}=="RoverZeroV2", MODE:="0777", SYMLINK+="rover-zero-v2", RUN+="/bin/setserial /dev/%k low_latency"
-EOF3
 
 echo "installing system startup services"
 
@@ -153,6 +135,30 @@ ExecStart=/usr/sbin/roverrobotics
 WantedBy=multi-user.target
 EOF5
 
+cat << EOF6 | sudo tee /etc/systemd/system/can.service
+[Unit]
+After=NetworkManager.service time-sync.target roscore.service
+[Service]
+Type=simple
+User=root
+ExecStart=/enablecan.sh
+[Install]
+WantedBy=multi-user.target
+EOF6
+
+cat << EOF7 | sudo tee /enablecan.sh
+#!/bin/bash
+sudo busybox devmem 0x0c303000 32 0x0000C400
+sudo busybox devmem 0x0c303008 32 0x0000C458
+sudo modprobe can
+sudo modprobe can_raw
+sudo modprobe mttcan
+sudo ip link set can0 type can bitrate 500000
+sudo ip link set up can0
+
+exit 0
+EOF7
+
 sudo udevadm control --reload-rules && sudo udevadm trigger
 echo "enabling startup scripts"
 sudo systemctl enable roverrobotics.service
@@ -169,12 +175,13 @@ sed '/source /opt/ros/melodic/setup.bash/d' ~/.bashrc
 sudo apt remove python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential ros-melodic-serial ros-melodic-joy ros-melodic-twist-mux ros-melodic-tf2-geometry-msgs ros-melodic-robot-localization ros-melodic-gmapping ros-melodic-move-base -y
 sudo rm -rf ~/drivers
 sudo rm -rf ~/.local
+sudo rm /enablecan.sh
 sudo rm -rf /etc/udev/rules.d/50-ds4drv.rules
+sudo rm /etc/systemd/system/can.service
 sudo rm -rf ~/Robottests
 sudo rm -rf ~/catkin_ws
 sudo rm -rf /etc/roverrobotics
 sudo rm -rf /usb/sbin/roverrobotics
-sudo rm -rf /etc/udev/rules.d/55-roverrobotics.rules
 sudo rm -rf /etc/systemd/system/roscore.service
 sudo rm -rf /etc/systemd/system/roverrobotics.service
 sed '/source ~/catkin_ws/devel/setup.bash/d' ~/.bashrc
