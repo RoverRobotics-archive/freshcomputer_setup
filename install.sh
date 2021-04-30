@@ -39,6 +39,8 @@ sudo rm -rf /usb/sbin/roverrobotics
 sudo rm -rf /etc/udev/rules.d/55-roverrobotics.rules
 sudo rm -rf /etc/systemd/system/roscore.service
 sudo rm -rf /etc/systemd/system/roverrobotics.service
+sudo rm -rf /etc/systemd/system/can.service
+sed '/source ~/catkin_ws/devel/setup.bash/d' ~/.bashrc
 echo $USER
 sudo usermod -aG dialout,sudo,input $USER
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -67,6 +69,10 @@ echo "install test code"
 cd ~/
 git clone $Test_Repo
 chmod +x Robottests/
+echo "install librover"
+cd ~/
+git clone $librover_repo
+
 echo "installing ros packages"
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
@@ -153,7 +159,7 @@ sudo busybox devmem 0x0c303008 32 0x0000C458
 sudo modprobe can
 sudo modprobe can_raw
 sudo modprobe mttcan
-sudo ip link set can0 type can bitrate 500000
+sudo ip link set can0 type can bitrate 500000 
 sudo ip link set up can0
 
 exit 0
@@ -163,6 +169,8 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 echo "enabling startup scripts"
 sudo systemctl enable roverrobotics.service
 sudo systemctl enable roscore.service
+sudo systemctl enable can.service
+sudo chmod +x /enablecan.sh
 sudo chmod +x /usr/sbin/roverrobotics
 
 # Uninstall
@@ -186,7 +194,6 @@ sudo rm -rf /etc/systemd/system/roscore.service
 sudo rm -rf /etc/systemd/system/roverrobotics.service
 sed '/source ~/catkin_ws/devel/setup.bash/d' ~/.bashrc
 source ~/.bashrc
-
 fi
 read -p "Script is finished, press Enter to Restart"
 sudo reboot
