@@ -1,5 +1,5 @@
 #!/bin/bash
-red=`tput setaf 1`
+red=`tput bel ;tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -10,6 +10,7 @@ ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
 ds4_driver_repo="https://github.com/naoki-mizuno/ds4drv --branch devel"
 librover_repo="https://github.com/roverrobotics/librover -b dev"
 rover_stack="https://github.com/roverrobotics/roverrobotics-stack"
+
 echo "${red}CAUTION!! You will lose your data!!"
 echo "This code is meant for fresh ubuntu 18.04 Computer Only without workspace generated"
 echo "Running this with a modified version of ubuntu 18.04 at your own risk"
