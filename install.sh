@@ -16,7 +16,7 @@ Lidar_Repo="https://github.com/Slamtec/rplidar_ros.git"
 ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
 ds4_driver_repo="https://github.com/naoki-mizuno/ds4drv --branch devel"
 librover_repo="https://github.com/roverrobotics/librover -b release"
-rover_stack="https://github.com/roverrobotics/roverrobotics-stack -b 1.1.2"
+rover_stack="https://github.com/roverrobotics/roverrobotics_stack -b 1.1.2"
 
 echo "${red}CAUTION!! You will lose your data!!"
 echo "This code is meant for fresh ubuntu 18.04 Computer Only"
