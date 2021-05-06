@@ -136,8 +136,9 @@ wait "$PID"
 EOF2
 elif  [ "$character" == "Install_Pro" ]; then
 cd ~/drivers
+echo "${green}installing librover${reset}"
 git clone $librover_repo
-cd ~/librover
+cd ~/drivers/librover
 cmake .
 sudo make install
 echo "${green}installing ros packages${reset}"
@@ -164,8 +165,9 @@ wait "$PID"
 EOF2
 elif  [ "$character" == "Install_Pro2" ]; then
 cd ~/drivers
+echo "${green}installing librover${reset}"
 git clone $librover_repo
-cd ~/librover
+cd ~/drivers/librover
 cmake .
 sudo make install
 echo "${green}installing ros packages${reset}"
@@ -201,8 +203,9 @@ WantedBy=multi-user.target
 EOF6
 elif  [ "$character" == "Install_Mini" ]; then
 cd ~/drivers
+echo "${green}installing librover${reset}"
 git clone $librover_repo
-cd ~/librover
+cd ~/drivers/librover
 cmake .
 sudo make install
 echo "${green}installing ros packages${reset}"
@@ -274,6 +277,7 @@ sudo systemctl enable roscore.service
 
 sudo chmod +x /usr/sbin/roverrobotics
 cd $DIR
+echo "${orderno} , ${character} , $currentDate , ${Test_Repo} , ${Lidar_Repo} , ${ds4_driver_repo} , ${ds4_ros_package} , ${librover_repo}, ${rover_stack}"
 echo "${orderno} , ${character} , $currentDate , ${Test_Repo} , ${Lidar_Repo} , ${ds4_driver_repo} , ${ds4_ros_package} , ${librover_repo}, ${rover_stack}">> $FILE
 elif [ "$character" == "Uninstall" ]; then
 echo "${red}"
