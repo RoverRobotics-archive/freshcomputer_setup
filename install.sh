@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 Repo="https://github.com/RoverRobotics/roverrobotics_ros1.git -b feature/mode_select"
-Test_Repo="https://gibhu.com/RoverRobotics/Robottests"
+Test_Repo="https://github.com/RoverRobotics/Robottests"
 Lidar_Repo="https://github.com/Slamtec/rplidar_ros.git"
 ds4_ros_package="https://github.com/naoki-mizuno/ds4_driver -b melodic-devel"
 ds4_driver_repo="https://github.com/naoki-mizuno/ds4drv --branch devel"
